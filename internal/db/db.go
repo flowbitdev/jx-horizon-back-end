@@ -22,8 +22,9 @@ func InitDB(ctx context.Context) (*pgxpool.Pool, error) {
 		connString := os.Getenv("DATABASE_URL")
 		if os.Getenv("DB_MODE") == "local" {
 			connString = os.Getenv("LOCAL_DATABASE_URL")
-		} else if connString == "" {
-			connString = os.Getenv("LOCAL_DATABASE_URL")
+		}
+		if connString == "" {
+			log.Fatal().Msg("DATABASE_URL (or LOCAL_DATABASE_URL in local mode) environment variable is required")
 		}
 
 		config, pErr := pgxpool.ParseConfig(connString)

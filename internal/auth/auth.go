@@ -26,9 +26,6 @@ var (
 
 func InitAuth() {
 	frontendURL := os.Getenv("FRONTEND_URL")
-	if frontendURL == "" || strings.Contains(frontendURL, "localhost") {
-		frontendURL = "https://jx-horizon-vercel.vercel.app"
-	}
 
 	googleOauthConfig = &oauth2.Config{
 		RedirectURL:  strings.TrimSuffix(frontendURL, "/") + "/api/auth/google/callback",
@@ -63,17 +60,15 @@ func getOAuthConfig(c *gin.Context) *oauth2.Config {
 		return &cfg
 	}
 
-	// Priority 2: FRONTEND_URL env variable if set and non-localhost
+	// Priority 2: FRONTEND_URL env variable if set
 	frontendURL := os.Getenv("FRONTEND_URL")
-	if frontendURL != "" && !strings.Contains(frontendURL, "localhost") && !strings.Contains(frontendURL, "replit.app") && !strings.Contains(frontendURL, "replit.dev") {
+	if frontendURL != "" {
 		cfg.RedirectURL = strings.TrimSuffix(frontendURL, "/") + "/api/auth/google/callback"
 		log.Info().Str("envRedirectURL", cfg.RedirectURL).Msg("Using FRONTEND_URL OAuth redirect URL")
 		return &cfg
 	}
 
-	// Priority 3: Fallback to Vercel production domain
-	cfg.RedirectURL = "https://jx-horizon-vercel.vercel.app/api/auth/google/callback"
-	log.Info().Str("fallbackRedirectURL", cfg.RedirectURL).Msg("Using fallback production Vercel OAuth redirect URL")
+	log.Warn().Str("redirectURL", cfg.RedirectURL).Msg("Using default base OAuth redirect URL")
 	return &cfg
 }
 
@@ -157,9 +152,6 @@ func (h *AuthHandler) GoogleCallback(c *gin.Context) {
 		redirectURL = proto + "://" + host
 	} else {
 		redirectURL = os.Getenv("FRONTEND_URL")
-		if redirectURL == "" || strings.Contains(redirectURL, "localhost") {
-			redirectURL = "https://jx-horizon-vercel.vercel.app"
-		}
 	}
 
 	// New users who haven't accepted ToS get redirected to the acceptance page.
