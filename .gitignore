@@ -1,0 +1,19 @@
+# Binaries
+server
+server_linux
+server_linux*
+*.exe
+*.gz
+
+# Logs
+*.log
+server_out.log
+server_err.log
+
+# Env
+.env
+.env.local
+
+# Build cache
+.gocache/
+uploads/
