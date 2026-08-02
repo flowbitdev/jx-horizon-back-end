@@ -48,17 +48,17 @@ func NewAuthHandler(store storage.IStorage) *AuthHandler {
 func getOAuthConfig(c *gin.Context) *oauth2.Config {
 	cfg := *googleOauthConfig
 
-	backendURL := os.Getenv("BACKEND_URL")
-	if backendURL != "" {
-		cfg.RedirectURL = strings.TrimSuffix(backendURL, "/") + "/api/auth/google/callback"
-		log.Info().Str("redirectURL", cfg.RedirectURL).Msg("Using BACKEND_URL for OAuth redirect URL")
-		return &cfg
-	}
-
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL != "" {
 		cfg.RedirectURL = strings.TrimSuffix(frontendURL, "/") + "/api/auth/google/callback"
 		log.Info().Str("redirectURL", cfg.RedirectURL).Msg("Using FRONTEND_URL for OAuth redirect URL")
+		return &cfg
+	}
+
+	backendURL := os.Getenv("BACKEND_URL")
+	if backendURL != "" {
+		cfg.RedirectURL = strings.TrimSuffix(backendURL, "/") + "/api/auth/google/callback"
+		log.Info().Str("redirectURL", cfg.RedirectURL).Msg("Using BACKEND_URL for OAuth redirect URL")
 		return &cfg
 	}
 
