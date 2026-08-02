@@ -36,6 +36,7 @@ func main() {
 	log.Info().Msg("Logger initialized")
 
 	// ─── 2. Environment Variables ──────────────────────────────────────────────
+	// Load .env file if present locally; in production environment variables are injected by cloud provider
 	if err := godotenv.Load(".env"); err != nil {
 		if err := godotenv.Load("../.env"); err != nil {
 			log.Warn().Msg("No .env file found in . or ..")
