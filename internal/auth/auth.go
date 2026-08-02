@@ -48,23 +48,17 @@ func NewAuthHandler(store storage.IStorage) *AuthHandler {
 func getOAuthConfig(c *gin.Context) *oauth2.Config {
 	cfg := *googleOauthConfig
 
-	// Priority 1: X-Forwarded-Host header injected by Vercel Edge reverse proxy
-	host := c.GetHeader("X-Forwarded-Host")
-	if host != "" && !strings.Contains(host, "localhost") && !strings.Contains(host, "127.0.0.1") && !strings.Contains(host, "replit.app") && !strings.Contains(host, "replit.dev") {
-		proto := c.GetHeader("X-Forwarded-Proto")
-		if proto == "" {
-			proto = "https"
-		}
-		cfg.RedirectURL = proto + "://" + host + "/api/auth/google/callback"
-		log.Info().Str("dynamicRedirectURL", cfg.RedirectURL).Msg("Using X-Forwarded-Host OAuth redirect URL")
+	backendURL := os.Getenv("BACKEND_URL")
+	if backendURL != "" {
+		cfg.RedirectURL = strings.TrimSuffix(backendURL, "/") + "/api/auth/google/callback"
+		log.Info().Str("redirectURL", cfg.RedirectURL).Msg("Using BACKEND_URL for OAuth redirect URL")
 		return &cfg
 	}
 
-	// Priority 2: FRONTEND_URL env variable if set
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL != "" {
 		cfg.RedirectURL = strings.TrimSuffix(frontendURL, "/") + "/api/auth/google/callback"
-		log.Info().Str("envRedirectURL", cfg.RedirectURL).Msg("Using FRONTEND_URL OAuth redirect URL")
+		log.Info().Str("redirectURL", cfg.RedirectURL).Msg("Using FRONTEND_URL for OAuth redirect URL")
 		return &cfg
 	}
 
