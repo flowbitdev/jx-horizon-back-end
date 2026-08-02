@@ -27,6 +27,6 @@ RUN apk add --no-cache ca-certificates tzdata
 # Copy binary from builder
 COPY --from=builder /app/main .
 
-EXPOSE 5000
+EXPOSE 10000
 
 CMD ["./main"]
