@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"errors"
-	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -31,31 +29,11 @@ import (
 )
 
 func main() {
-	// ─── 1. Logger (JSON to file + pretty to stderr) ──────────────────────────
+	// ─── 1. Logger (Stdout/Stderr for 12-factor cloud apps) ──────────────────
 	zerolog.TimeFieldFormat = time.RFC3339
-	if err := os.MkdirAll("logs", 0755); err != nil {
-		panic(err)
-	}
-
-	logFilePath := os.Getenv("LOG_FILE")
-	if logFilePath == "" {
-		logFilePath = filepath.Join("logs", "server.log")
-	}
-
-	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	defer logFile.Close()
-
-	// Console writer (human-readable). JSON writer (machine-parseable) goes to file.
 	consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}
-	jsonWriter := logFile // pure JSON, one object per line
-
-	log.Logger = zerolog.New(io.MultiWriter(consoleWriter, jsonWriter)).
-		With().Timestamp().Logger().Level(zerolog.DebugLevel)
-
-	log.Info().Str("log_file", logFilePath).Msg("Logger initialized")
+	log.Logger = zerolog.New(consoleWriter).With().Timestamp().Logger().Level(zerolog.DebugLevel)
+	log.Info().Msg("Logger initialized")
 
 	// ─── 2. Environment Variables ──────────────────────────────────────────────
 	if err := godotenv.Load(".env"); err != nil {
