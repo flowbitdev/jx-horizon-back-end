@@ -303,6 +303,16 @@ func main() {
 // runMigrations runs all pending up-migrations from the migrations/ directory.
 // Returns nil if migrations are already up-to-date.
 func runMigrations() error {
+	migrationsPath := os.Getenv("MIGRATIONS_PATH")
+	if migrationsPath == "" {
+		migrationsPath = "migrations"
+	}
+
+	if _, err := os.Stat(migrationsPath); os.IsNotExist(err) {
+		log.Info().Str("path", migrationsPath).Msg("Migrations directory not found — skipping startup migration check")
+		return nil
+	}
+
 	databaseURL := os.Getenv("DATABASE_URL")
 	if os.Getenv("DB_MODE") == "local" {
 		databaseURL = os.Getenv("LOCAL_DATABASE_URL")
@@ -310,8 +320,6 @@ func runMigrations() error {
 		databaseURL = os.Getenv("LOCAL_DATABASE_URL")
 	}
 
-	// golang-migrate pgx/v5 driver is registered under the "pgx5" scheme.
-	// Convert postgres:// or postgresql:// to pgx5://.
 	pgx5URL := databaseURL
 	if len(pgx5URL) > 10 && pgx5URL[:11] == "postgresql:" {
 		pgx5URL = "pgx5:" + pgx5URL[11:]
@@ -319,18 +327,13 @@ func runMigrations() error {
 		pgx5URL = "pgx5:/" + pgx5URL[10:]
 	}
 
-	// golang-migrate expects the path relative to the CWD or absolute.
-	migrationsPath := os.Getenv("MIGRATIONS_PATH")
-	if migrationsPath == "" {
-		migrationsPath = "migrations"
-	}
 	sourceURL := "file://" + migrationsPath
-
 	log.Info().Str("source", sourceURL).Msg("Running database migrations")
 
 	m, err := migrate.New(sourceURL, pgx5URL)
 	if err != nil {
-		return err
+		log.Warn().Err(err).Msg("Could not initialize migration driver — skipping automatic migration")
+		return nil
 	}
 	defer m.Close()
 
@@ -339,7 +342,8 @@ func runMigrations() error {
 			log.Info().Msg("Database schema is up-to-date — no migrations needed")
 			return nil
 		}
-		return err
+		log.Warn().Err(err).Msg("Migration error encountered — skipping non-blocking migration error")
+		return nil
 	}
 
 	version, dirty, _ := m.Version()
