@@ -1,9 +1,9 @@
 services:
   - type: web
     name: jx-horizon-backend
-    env: docker
-    dockerfilePath: Dockerfile
-    dockerContext: .
+    env: go
+    buildCommand: go build -o server ./cmd/server/main.go
+    startCommand: ./server
     plan: free
     region: oregon
     envVars:
@@ -13,15 +13,3 @@ services:
         value: production
       - key: DB_MODE
         value: production
-      - key: DATABASE_URL
-        sync: false
-      - key: FRONTEND_URL
-        sync: false
-      - key: GOOGLE_CLIENT_ID
-        sync: false
-      - key: GOOGLE_CLIENT_SECRET
-        sync: false
-      - key: SESSION_SECRET
-        generateValue: true
-      - key: ENCLAVE_SECRET
-        generateValue: true
