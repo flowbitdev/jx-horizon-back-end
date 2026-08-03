@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 )
@@ -33,6 +34,9 @@ func InitDB(ctx context.Context) (*pgxpool.Pool, error) {
 			err = pErr
 			return
 		}
+
+		// Disable prepared statements for PgBouncer / Supabase Transaction Pooler (port 6543)
+		config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
 		// Performance Tuning
 		config.MaxConns = 20

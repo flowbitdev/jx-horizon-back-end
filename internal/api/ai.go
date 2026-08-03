@@ -417,6 +417,10 @@ type modelToolCall struct {
 }
 
 func (h *AIHandler) runModelToolLoop(c *gin.Context, message string, history []models.AIChatMessage, memory *GlobalMemory, trades []models.Trade, persona PersonaID, thinking bool, userID uuid.UUID, allTrades []models.Trade, actionProposal *AIActionProposal, workflow *[]AIWorkflowStep, sources *[]AIToolSource, isStream bool) (*AIResponse, error) {
+	if h.aiService == nil || h.aiService.client == nil {
+		return nil, fmt.Errorf("AI service is not configured (GEMINI_API_KEY missing)")
+	}
+
 	ctx := c.Request.Context()
 	finalOnlyInstruction := "Now respond to the user with ONLY the final answer. Do not explain your reasoning. Do not mention what tools you used. Just give the clean, helpful response."
 
