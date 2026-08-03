@@ -219,6 +219,25 @@ func (h *AuthHandler) GetEnclaveSeed(c *gin.Context) {
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// AGENT ACCESS: Authenticate via X-Agent-Key header
+		agentKey := c.GetHeader("X-Agent-Key")
+		expectedSecret := os.Getenv("ENCLAVE_SECRET")
+		if expectedSecret == "" {
+			expectedSecret = os.Getenv("SESSION_SECRET")
+		}
+		if agentKey != "" && expectedSecret != "" && agentKey == expectedSecret {
+			agentID := uuid.MustParse("a0000000-0000-4000-a000-000000000001")
+			c.Set("user_id", agentID)
+			log.Info().
+				Str("event", "agent_api_action").
+				Str("method", c.Request.Method).
+				Str("path", c.Request.URL.Path).
+				Str("agent_id", agentID.String()).
+				Msg("AGENT_ACTION: Authenticated agent API request executed")
+			c.Next()
+			return
+		}
+
 		// BENCH MODE: bypass auth for load testing.
 		if os.Getenv("BENCH_MODE") == "true" {
 			benchUserID := uuid.MustParse("00000000-0000-0000-0000-000000000099")
