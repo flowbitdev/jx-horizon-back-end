@@ -130,6 +130,72 @@ func (r *R2Client) Upload(ctx context.Context, objectKey string, data []byte, co
 	return fileURL, nil
 }
 
+func (r *R2Client) Get(ctx context.Context, objectKey string) ([]byte, string, error) {
+	if !r.IsConfigured() {
+		return nil, "", fmt.Errorf("R2 credentials not fully configured")
+	}
+
+	now := time.Now().UTC()
+	amzDate := now.Format("20060102T150405Z")
+	dateStamp := now.Format("20060102")
+
+	region := "auto"
+	service := "s3"
+	host := fmt.Sprintf("%s.r2.cloudflarestorage.com", r.AccountID)
+
+	canonicalURI := fmt.Sprintf("/%s/%s", r.BucketName, objectKey)
+	endpoint := fmt.Sprintf("https://%s%s", host, canonicalURI)
+
+	payloadHash := "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+	canonicalHeaders := fmt.Sprintf("host:%s\nx-amz-content-sha256:%s\nx-amz-date:%s\n", host, payloadHash, amzDate)
+	signedHeaders := "host;x-amz-content-sha256;x-amz-date"
+	canonicalQuery := ""
+
+	canonicalRequest := fmt.Sprintf("GET\n%s\n%s\n%s\n%s\n%s", canonicalURI, canonicalQuery, canonicalHeaders, signedHeaders, payloadHash)
+
+	reqHasher := sha256.New()
+	reqHasher.Write([]byte(canonicalRequest))
+	canonicalReqHash := hex.EncodeToString(reqHasher.Sum(nil))
+
+	algorithm := "AWS4-HMAC-SHA256"
+	credentialScope := fmt.Sprintf("%s/%s/%s/aws4_request", dateStamp, region, service)
+	stringToSign := fmt.Sprintf("%s\n%s\n%s\n%s", algorithm, amzDate, credentialScope, canonicalReqHash)
+
+	signingKey := getSignatureKey(r.SecretAccessKey, dateStamp, region, service)
+	signature := hex.EncodeToString(hmacSign(signingKey, []byte(stringToSign)))
+
+	authHeader := fmt.Sprintf("%s Credential=%s/%s, SignedHeaders=%s, Signature=%s", algorithm, r.AccessKeyID, credentialScope, signedHeaders, signature)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to create R2 GET request: %w", err)
+	}
+
+	req.Header.Set("Host", host)
+	req.Header.Set("x-amz-date", amzDate)
+	req.Header.Set("x-amz-content-sha256", payloadHash)
+	req.Header.Set("Authorization", authHeader)
+
+	resp, err := r.HTTPClient.Do(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("R2 get HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, "", fmt.Errorf("R2 get failed with status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read R2 response body: %w", err)
+	}
+
+	return data, resp.Header.Get("Content-Type"), nil
+}
+
 func hmacSign(key []byte, data []byte) []byte {
 	h := hmac.New(sha256.New, key)
 	h.Write(data)

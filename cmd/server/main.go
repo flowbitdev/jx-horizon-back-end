@@ -132,10 +132,38 @@ func main() {
 	if err := os.MkdirAll("uploads", 0755); err != nil {
 		log.Fatal().Err(err).Msg("Failed to create uploads directory")
 	}
+	r2Client := storage.NewR2ClientFromEnv()
+
 	uploadsGroup := r.Group("/uploads")
 	uploadsGroup.Use(auth.AuthRequired())
 	uploadsGroup.Use(appMiddleware.ReadRateLimit())
-	uploadsGroup.Static("", "./uploads")
+	uploadsGroup.GET("/*filepath", func(c *gin.Context) {
+		filename := strings.TrimPrefix(c.Param("filepath"), "/")
+		if filename == "" {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		if r2Client.IsConfigured() {
+			data, contentType, err := r2Client.Get(c.Request.Context(), filename)
+			if err == nil && len(data) > 0 {
+				if contentType != "" {
+					c.Header("Content-Type", contentType)
+				}
+				c.Data(http.StatusOK, contentType, data)
+				return
+			}
+		}
+
+		// Local fallback
+		localPath := filepath.Join("uploads", filename)
+		if _, err := os.Stat(localPath); err == nil {
+			c.File(localPath)
+			return
+		}
+
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+	})
 
 	// ─── 7. Routes ────────────────────────────────────────────────────────────
 	apiGroup := r.Group("/api")
