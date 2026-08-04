@@ -726,6 +726,10 @@ func isTransientGeminiError(err error) bool {
 	}
 	msg := strings.ToLower(err.Error())
 	return strings.Contains(msg, "error 500") ||
+		strings.Contains(msg, "error 429") ||
+		strings.Contains(msg, "quota") ||
+		strings.Contains(msg, "rate limit") ||
+		strings.Contains(msg, "resource_exhausted") ||
 		strings.Contains(msg, "timeout") ||
 		strings.Contains(msg, "tempor") ||
 		strings.Contains(msg, "unavailable") ||

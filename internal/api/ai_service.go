@@ -324,7 +324,7 @@ func generateContentWithRetry(ctx context.Context, model *genai.GenerativeModel,
 		}
 		lastErr = err
 		msg := strings.ToLower(err.Error())
-		if !(strings.Contains(msg, "error 500") || strings.Contains(msg, "timeout") || strings.Contains(msg, "tempor") || strings.Contains(msg, "unavailable") || strings.Contains(msg, "internal")) {
+		if !(strings.Contains(msg, "error 500") || strings.Contains(msg, "error 429") || strings.Contains(msg, "quota") || strings.Contains(msg, "rate limit") || strings.Contains(msg, "timeout") || strings.Contains(msg, "tempor") || strings.Contains(msg, "unavailable") || strings.Contains(msg, "internal")) {
 			return nil, err
 		}
 		log.Warn().Err(err).Int("attempt", attempt+1).Msg("Transient Gemini generateContent failure; retrying")
