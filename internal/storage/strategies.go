@@ -1,4 +1,4 @@
-﻿package storage
+package storage
 
 import (
 	"context"
@@ -48,6 +48,9 @@ func (s *DatabaseStorage) CreateStrategy(ctx context.Context, strategy *models.S
 	}
 	if strategy.CreatedAt.IsZero() {
 		strategy.CreatedAt = time.Now()
+	}
+	if strategy.Rules == nil {
+		strategy.Rules = make(map[string]interface{})
 	}
 
 	clock, err := s.nextClock(ctx, strategy.UserID)
