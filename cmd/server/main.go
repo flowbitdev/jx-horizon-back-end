@@ -153,6 +153,9 @@ func main() {
 		apiGroup.GET("/health", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"status": "ok", "engine": "go"})
 		})
+		apiGroup.HEAD("/health", func(c *gin.Context) {
+			c.Status(http.StatusOK)
+		})
 		apiGroup.GET("/version", func(c *gin.Context) {
 			version := os.Getenv("APP_VERSION")
 			if version == "" {
