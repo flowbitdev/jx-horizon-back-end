@@ -52,6 +52,7 @@ func (s *DatabaseStorage) CreateStrategy(ctx context.Context, strategy *models.S
 	if strategy.Rules == nil {
 		strategy.Rules = make(map[string]interface{})
 	}
+	strategy.Active = true
 
 	clock, err := s.nextClock(ctx, strategy.UserID)
 	if err != nil {

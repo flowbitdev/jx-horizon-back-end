@@ -93,6 +93,12 @@ func (s *DatabaseStorage) CreateGoal(ctx context.Context, goal *models.Goal) err
 	if goal.Category == "" {
 		goal.Category = "general"
 	}
+	if goal.Status == "" {
+		goal.Status = "in_progress"
+	}
+	if goal.TargetMetric == "" {
+		goal.TargetMetric = "profit"
+	}
 
 	clock, err := s.nextClock(ctx, goal.UserID)
 	if err != nil {
