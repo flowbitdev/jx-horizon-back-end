@@ -71,10 +71,10 @@ func (h *UploadHandler) UploadImage(c *gin.Context) {
 
 	// Cloudflare R2 Upload Path
 	if h.r2.IsConfigured() {
-		r2URL, err := h.r2.Upload(c.Request.Context(), newFilename, fileBytes, contentType)
-		if err == nil && r2URL != "" {
+		_, err := h.r2.Upload(c.Request.Context(), newFilename, fileBytes, contentType)
+		if err == nil {
 			c.JSON(http.StatusOK, gin.H{
-				"url": r2URL,
+				"url": fmt.Sprintf("/uploads/%s", newFilename),
 			})
 			return
 		}
