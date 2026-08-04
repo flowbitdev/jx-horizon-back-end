@@ -492,7 +492,7 @@ func NewAIService() *AIService {
 
 	modelName := os.Getenv("GEMINI_MODEL")
 	if modelName == "" {
-		modelName = "gemini-2.0-flash"
+		modelName = "gemma-4-31b-it"
 	}
 	model := client.GenerativeModel(modelName)
 
