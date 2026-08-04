@@ -183,6 +183,27 @@ type GoalMilestone struct {
 	CreatedAt       time.Time  `json:"createdAt" db:"created_at"`
 }
 
+func (m *GoalMilestone) UnmarshalJSON(data []byte) error {
+	type Alias GoalMilestone
+	aux := &struct {
+		TitleAlt          *string  `json:"title"`
+		ThresholdValueAlt *float64 `json:"threshold_value"`
+		*Alias
+	}{
+		Alias: (*Alias)(m),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if aux.TitleAlt != nil && m.Label == "" {
+		m.Label = *aux.TitleAlt
+	}
+	if aux.ThresholdValueAlt != nil && m.ThresholdValue == 0 {
+		m.ThresholdValue = *aux.ThresholdValueAlt
+	}
+	return nil
+}
+
 // AIPersona represents the ai_personas table
 type AIPersona struct {
 	ID        uuid.UUID  `json:"id" db:"id"`
