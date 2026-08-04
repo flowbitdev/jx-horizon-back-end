@@ -101,6 +101,76 @@ type Goal struct {
 	Milestones   []GoalMilestone `json:"milestones"`
 }
 
+func (t *Trade) UnmarshalJSON(data []byte) error {
+	type Alias Trade
+	aux := &struct {
+		StopLossAlt    *float64 `json:"stop_loss"`
+		TakeProfitAlt  *float64 `json:"take_profit"`
+		LotSizeAlt     *float64 `json:"lot_size"`
+		RiskPercentAlt *float64 `json:"risk_percent"`
+		AssetClassAlt  *string  `json:"asset_class"`
+		SetupTypeAlt   *string  `json:"setup_type"`
+		ProfitLossAlt  *float64 `json:"profit_loss"`
+		*Alias
+	}{
+		Alias: (*Alias)(t),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if aux.StopLossAlt != nil && t.StopLoss == 0 {
+		t.StopLoss = *aux.StopLossAlt
+	}
+	if aux.TakeProfitAlt != nil && t.TakeProfit == 0 {
+		t.TakeProfit = *aux.TakeProfitAlt
+	}
+	if aux.LotSizeAlt != nil && t.LotSize == 0 {
+		t.LotSize = *aux.LotSizeAlt
+	}
+	if aux.RiskPercentAlt != nil && t.RiskPercent == 0 {
+		t.RiskPercent = *aux.RiskPercentAlt
+	}
+	if aux.AssetClassAlt != nil && t.AssetClass == "" {
+		t.AssetClass = *aux.AssetClassAlt
+	}
+	if aux.SetupTypeAlt != nil && t.SetupType == "" {
+		t.SetupType = *aux.SetupTypeAlt
+	}
+	if aux.ProfitLossAlt != nil && t.ProfitLoss == nil {
+		t.ProfitLoss = aux.ProfitLossAlt
+	}
+	return nil
+}
+
+func (g *Goal) UnmarshalJSON(data []byte) error {
+	type Alias Goal
+	aux := &struct {
+		TitleAlt        *string  `json:"title"`
+		TargetValueAlt  *float64 `json:"target_value"`
+		CurrentValueAlt *float64 `json:"current_value"`
+		TargetMetricAlt *string  `json:"target_metric"`
+		*Alias
+	}{
+		Alias: (*Alias)(g),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if aux.TitleAlt != nil && g.Name == "" {
+		g.Name = *aux.TitleAlt
+	}
+	if aux.TargetValueAlt != nil && g.TargetValue == 0 {
+		g.TargetValue = *aux.TargetValueAlt
+	}
+	if aux.CurrentValueAlt != nil && g.CurrentValue == 0 {
+		g.CurrentValue = *aux.CurrentValueAlt
+	}
+	if aux.TargetMetricAlt != nil && g.TargetMetric == "" {
+		g.TargetMetric = *aux.TargetMetricAlt
+	}
+	return nil
+}
+
 type GoalMilestone struct {
 	ID              uuid.UUID  `json:"id" db:"id"`
 	GoalID          uuid.UUID  `json:"goalId" db:"goal_id"`
