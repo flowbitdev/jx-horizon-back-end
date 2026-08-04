@@ -38,7 +38,7 @@ func (h *GoalHandler) CreateGoal(c *gin.Context) {
 
 	g.UserID = c.MustGet("user_id").(uuid.UUID)
 	if err := h.store.CreateGoal(c.Request.Context(), &g); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create goal"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create goal: " + err.Error()})
 		return
 	}
 	c.JSON(http.StatusCreated, g)

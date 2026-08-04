@@ -36,7 +36,7 @@ func (h *StrategyHandler) CreateStrategy(c *gin.Context) {
 
 	st.UserID = c.MustGet("user_id").(uuid.UUID)
 	if err := h.store.CreateStrategy(c.Request.Context(), &st); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create strategy"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create strategy: " + err.Error()})
 		return
 	}
 	c.JSON(http.StatusCreated, st)
