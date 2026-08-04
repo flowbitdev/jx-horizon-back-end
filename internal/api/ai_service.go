@@ -757,15 +757,27 @@ func (s *AIService) generateSVGArtifact(ctx context.Context, message string, tra
 	}
 
 	svgName := "ai-custom-svg-" + fmt.Sprintf("%d", time.Now().UnixNano()) + ".svg"
+	source.Kind = "svg"
+	source.Type = "svg"
+	source.Status = "live"
+
+	r2 := storage.NewR2ClientFromEnv()
+	if r2.IsConfigured() {
+		r2URL, err := r2.Upload(ctx, svgName, []byte(svg), "image/svg+xml")
+		if err == nil && r2URL != "" {
+			source.URL = r2URL
+			source.Value = r2URL
+			return toolResult{Source: source, Context: "Generated custom SVG image artifact: " + source.URL}
+		}
+		log.Warn().Err(err).Msg("R2 upload failed for AI SVG, falling back to local file")
+	}
+
 	svgPath := filepath.Join("uploads", svgName)
 	if err := os.WriteFile(svgPath, []byte(svg), 0644); err != nil {
 		source.Status = "failed"
 		return toolResult{Source: source}
 	}
 
-	source.Kind = "svg"
-	source.Type = "svg"
-	source.Status = "live"
 	source.URL = "/uploads/" + filepath.Base(svgPath)
 	source.Value = source.URL
 	return toolResult{Source: source, Context: "Generated custom SVG image artifact: " + source.URL}
