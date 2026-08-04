@@ -94,7 +94,7 @@ func (s *DatabaseStorage) CreateGoal(ctx context.Context, goal *models.Goal) err
 		goal.Category = "general"
 	}
 	if goal.Status == "" {
-		goal.Status = "in_progress"
+		goal.Status = "IN_PROGRESS"
 	}
 	if goal.TargetMetric == "" {
 		goal.TargetMetric = "profit"

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"time"
@@ -54,6 +55,11 @@ func (s *DatabaseStorage) CreateStrategy(ctx context.Context, strategy *models.S
 	}
 	strategy.Active = true
 
+	rulesBytes, err := json.Marshal(strategy.Rules)
+	if err != nil {
+		rulesBytes = []byte("{}")
+	}
+
 	clock, err := s.nextClock(ctx, strategy.UserID)
 	if err != nil {
 		return err
@@ -63,7 +69,7 @@ func (s *DatabaseStorage) CreateStrategy(ctx context.Context, strategy *models.S
 	_, err = s.pool.Exec(ctx, `
 		INSERT INTO strategies (id, user_id, name, description, rules, active, vector_clock, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	`, strategy.ID, strategy.UserID, strategy.Name, strategy.Description, strategy.Rules, strategy.Active, strategy.VectorClock, strategy.CreatedAt)
+	`, strategy.ID, strategy.UserID, strategy.Name, strategy.Description, string(rulesBytes), strategy.Active, strategy.VectorClock, strategy.CreatedAt)
 	if err != nil {
 		return err
 	}
