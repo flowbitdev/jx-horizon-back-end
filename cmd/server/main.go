@@ -188,7 +188,7 @@ func main() {
 		apiGroup.GET("/version", func(c *gin.Context) {
 			version := os.Getenv("APP_VERSION")
 			if version == "" {
-				version = "1.0.0"
+				version = "1.0.2"
 			}
 			c.JSON(http.StatusOK, gin.H{"version": version})
 		})
